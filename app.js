@@ -2,61 +2,77 @@
 // 結合 Google Places types 與關鍵字（從 displayName/primaryTypeDisplay 比對）
 // types  — 比對 place.types / primaryType（Google 官方 type）
 // keywords — 比對 displayName + primaryTypeDisplay（小寫，涵蓋中/英）
+//
+// 排序邏輯：台式在地 → 華語圈 → 東亞 → 東南亞/南亞 → 西方異國 →
+//          料理風格 → 食材導向 → 餐飲形式（早餐/速食/咖啡/甜點）
 const CUISINE_FILTERS = [
+  // ── 本地 & 華語圈 ──
+  { id: "taiwanese",  label: "台式",   emoji: "🍱",
+    types: [],
+    keywords: ["台式", "台菜", "小吃", "滷味", "牛肉麵", "便當", "自助餐", "熱炒", "taiwanese"] },
+  { id: "chinese",    label: "中式",   emoji: "🥟",
+    types: ["chinese_restaurant"],
+    keywords: ["中式", "中餐", "港式", "粵", "川", "湘", "江浙", "北方", "chinese", "dim sum"] },
+
+  // ── 東亞 ──
   { id: "japanese",   label: "日式",   emoji: "🍣",
     types: ["japanese_restaurant", "sushi_restaurant", "ramen_restaurant"],
     keywords: ["日式", "日本料理", "壽司", "拉麵", "丼", "居酒屋", "japanese", "sushi", "ramen", "izakaya"] },
   { id: "korean",     label: "韓式",   emoji: "🍜",
     types: ["korean_restaurant"],
     keywords: ["韓式", "韓國", "korean"] },
-  { id: "bbq",        label: "燒肉",   emoji: "🥩",
-    types: ["barbecue_restaurant", "steak_house"],
-    keywords: ["燒肉", "燒烤", "yakiniku", "bbq", "barbecue", "grill", "steak", "牛排"] },
-  { id: "hotpot",     label: "火鍋",   emoji: "🍲",
-    types: [],
-    keywords: ["火鍋", "麻辣鍋", "涮涮鍋", "壽喜燒", "hot pot", "hotpot", "shabu", "sukiyaki"] },
-  { id: "breakfast",  label: "早餐",   emoji: "🥐",
-    types: ["breakfast_restaurant", "brunch_restaurant"],
-    keywords: ["早餐", "早午餐", "brunch", "breakfast"] },
-  { id: "chinese",    label: "中式",   emoji: "🥟",
-    types: ["chinese_restaurant"],
-    keywords: ["中式", "中餐", "港式", "粵", "川", "湘", "江浙", "北方", "chinese", "dim sum"] },
-  { id: "taiwanese",  label: "台式",   emoji: "🍱",
-    types: [],
-    keywords: ["台式", "台菜", "小吃", "滷味", "牛肉麵", "便當", "自助餐", "熱炒", "taiwanese"] },
-  { id: "american",   label: "美式",   emoji: "🍔",
-    types: ["american_restaurant", "hamburger_restaurant"],
-    keywords: ["美式", "漢堡", "american", "burger", "diner"] },
-  { id: "italian",    label: "義式",   emoji: "🍝",
-    types: ["italian_restaurant", "pizza_restaurant"],
-    keywords: ["義式", "義大利", "披薩", "義大利麵", "italian", "pizza", "pasta"] },
+
+  // ── 東南亞 & 南亞 ──
   { id: "thai",       label: "泰式",   emoji: "🌶️",
     types: ["thai_restaurant"],
     keywords: ["泰式", "泰國", "thai"] },
   { id: "vietnamese", label: "越式",   emoji: "🍲",
     types: ["vietnamese_restaurant"],
     keywords: ["越式", "越南", "河粉", "vietnamese", "pho"] },
-  { id: "cafe",       label: "咖啡",   emoji: "☕",
-    types: ["cafe", "coffee_shop"],
-    keywords: ["咖啡", "cafe", "coffee"] },
-  { id: "dessert",    label: "甜點",   emoji: "🍰",
-    types: ["bakery", "ice_cream_shop"],
-    keywords: ["甜點", "蛋糕", "麵包", "冰", "手搖", "飲", "bakery", "dessert", "ice cream"] },
-  { id: "fast_food",  label: "速食",   emoji: "🍟",
-    types: ["fast_food_restaurant"],
-    keywords: ["速食", "fast food"] },
   { id: "indian",     label: "印度",   emoji: "🍛",
     types: ["indian_restaurant"],
     keywords: ["印度", "indian"] },
+
+  // ── 西方異國料理 ──
+  { id: "italian",    label: "義式",   emoji: "🍝",
+    types: ["italian_restaurant", "pizza_restaurant"],
+    keywords: ["義式", "義大利", "披薩", "義大利麵", "italian", "pizza", "pasta"] },
+  { id: "american",   label: "美式",   emoji: "🍔",
+    types: ["american_restaurant", "hamburger_restaurant"],
+    keywords: ["美式", "漢堡", "american", "burger", "diner"] },
   { id: "mexican",    label: "墨式",   emoji: "🌮",
     types: ["mexican_restaurant"],
     keywords: ["墨西哥", "mexican", "taco"] },
+
+  // ── 料理風格 ──
+  { id: "bbq",        label: "燒肉",   emoji: "🥩",
+    types: ["barbecue_restaurant", "steak_house"],
+    keywords: ["燒肉", "燒烤", "yakiniku", "bbq", "barbecue", "grill", "steak", "牛排"] },
+  { id: "hotpot",     label: "火鍋",   emoji: "🍲",
+    types: [],
+    keywords: ["火鍋", "麻辣鍋", "涮涮鍋", "壽喜燒", "hot pot", "hotpot", "shabu", "sukiyaki"] },
+
+  // ── 食材導向 ──
   { id: "seafood",    label: "海鮮",   emoji: "🦐",
     types: ["seafood_restaurant"],
     keywords: ["海鮮", "seafood", "fish"] },
   { id: "vegetarian", label: "蔬食",   emoji: "🥗",
     types: ["vegetarian_restaurant", "vegan_restaurant"],
     keywords: ["蔬食", "素食", "vegetarian", "vegan"] },
+
+  // ── 餐飲形式 ──
+  { id: "breakfast",  label: "早餐",   emoji: "🥐",
+    types: ["breakfast_restaurant", "brunch_restaurant"],
+    keywords: ["早餐", "早午餐", "brunch", "breakfast"] },
+  { id: "fast_food",  label: "速食",   emoji: "🍟",
+    types: ["fast_food_restaurant"],
+    keywords: ["速食", "fast food"] },
+  { id: "cafe",       label: "咖啡",   emoji: "☕",
+    types: ["cafe", "coffee_shop"],
+    keywords: ["咖啡", "cafe", "coffee"] },
+  { id: "dessert",    label: "甜點",   emoji: "🍰",
+    types: ["bakery", "ice_cream_shop"],
+    keywords: ["甜點", "蛋糕", "麵包", "冰", "手搖", "飲", "bakery", "dessert", "ice cream"] },
 ];
 
 // ===== 狀態 =====
