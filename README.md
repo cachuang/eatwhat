@@ -24,18 +24,43 @@ Browser ──► /api/places/search ──► Google Places API (searchNearby �
 - 後端：Vercel Serverless Functions（Node 20，原生 `fetch`，無外部套件）
 - API key 僅存在於 Serverless 環境，**不會** 傳到瀏覽器
 
-### 🎯 覆蓋策略：為什麼平行打多組？
+### 🎯 覆蓋策略：兩層 fan-out
 
-Google Places API (New) 的 `searchNearby` 單次回傳上限是 **20 筆**，而且沒有分頁。單次查詢常會被同一類（例如全是連鎖咖啡）吃滿名額，錯過其他好店。
+Google Places API (New) 的 `searchNearby` 單次回傳上限是 **20 筆**，而且沒有分頁。為了盡可能在半徑內多抓餐廳，`api/places/search.js` 做兩層平行擴散：
 
-`api/places/search.js` 把所有餐廳類型分成 4 組：
+#### 1) 空間切片（spatial tiling） — 5 格
+
+把以使用者為圓心的搜尋圓切成 5 個子圓：
+
+```
+        ┌───────── N ─────────┐
+        │         ●           │
+        │   ┌───┐             │
+   W ●──┤   C   ├──● E        │
+        │   └───┘             │
+        │         ●           │
+        └───────── S ─────────┘
+```
+
+- **C 中心**：原半徑 R
+- **N / S / E / W**：各自偏移 R/2，半徑 0.75R
+
+0.75R 是幾何上可以完整覆蓋原圓的最小子半徑（最糟案例是邊緣 45° 方向，離任一方位子圓中心 ≈ 0.737R）。子圓的 20-筆名額各自獨立，所以同一半徑內的覆蓋是原本的 ~5 倍。
+
+#### 2) 類型分組（type fan-out） — 4 組
+
+每個子圓再按語意分 4 組類型平行查：
 
 1. **通用**（`restaurant`, `food_court`, `meal_takeaway`）
-2. **咖啡/甜點/酒吧**（`cafe`, `coffee_shop`, `bakery`, `ice_cream_shop`, `bar`）
-3. **亞洲料理**（日式、韓式、中式、泰式、越式、壽司、拉麵、印度…）
-4. **西式/其他**（義式、美式、披薩、漢堡、墨西哥、燒烤、牛排、海鮮、速食、早餐…）
+2. **咖啡 / 甜點 / 酒吧**（`cafe`, `coffee_shop`, `bakery`, `ice_cream_shop`, `bar`）
+3. **亞洲料理**（日、韓、中、泰、越、壽司、拉麵、印度…）
+4. **西式 / 其他**（義、美、披薩、漢堡、墨西哥、燒烤、牛排、海鮮、速食、早餐…）
 
-4 組 **同時** 送出，拿回後以 `place.id` 去重、依距離排序。通常可以拿到 40~80 間。若只想要更少呼叫，把 `TYPE_GROUPS` 改短即可。
+#### 合併
+
+5 cells × 4 groups = **最多 20 次並行 `searchNearby`**。`Promise.allSettled` 讓單點失敗不影響其他結果，最後用 `place.id` 去重，並把因為方位子圓而滲出大圓外的結果濾掉（確保結果都在使用者指定的半徑內）。典型結果量：**100–400 間**（看都市密度）。
+
+想省錢：把 `TYPE_GROUPS` 減少（例如只留 1 組 = 5 次呼叫），或把 `generateCells` 改成只回傳中心格（= 4 次，回到切片前的行為）。
 
 ## 🔑 Google Cloud 設定
 
@@ -50,9 +75,11 @@ Google Places API (New) 的 `searchNearby` 單次回傳上限是 **20 筆**，�
    - **API restrictions**：選 **"Restrict key"** → 只勾 **Places API (New)**
 5. **啟用 billing**：Google Cloud 需要綁定付款方式，Places API (New) 有每月免費額度，超過才計費
 
-> 💸 **費用提醒**：每次使用者按「使用我的位置」會**並行送出 4 次 `searchNearby`**（見下方「覆蓋策略」），因為單次查詢最多只回 20 筆，要多結果只能分組查再去重。以 Pro SKU 計費大約 **US$0.16 / 次搜尋**（4 × $0.040），Place Photo 約 US$0.007/次。Vercel 邊緣快取 120 秒，同一定位 2 分鐘內重查不計費。
+> 💸 **費用提醒**：每次搜尋做 **5 格空間切片 × 4 組類型 fan-out = 最多 20 次平行 `searchNearby`**（見下方「覆蓋策略」）。以 Pro SKU 計費大約 **US$0.80 / 次搜尋**（20 × $0.040），Place Photo 約 US$0.007/次。Vercel 邊緣快取 120 秒，同一定位 2 分鐘內重查不計費。
 >
-> 若想再省錢，可以編輯 `api/places/search.js` 裡的 `TYPE_GROUPS` 減少組數（例如只留 2 組 = $0.08/次，結果約 30~40 間）。
+> Google Maps Platform 每月有 **US$200 免費額度**（約 5,000 次 Pro Nearby Search），個人日常使用遠遠用不完。建議到 Google Cloud Console → Billing → **Budgets & alerts** 設每月預算上限當保險。
+>
+> 若想省錢：把 `api/places/search.js` 的 `TYPE_GROUPS` 或 `generateCells` 改短即可線性降成本。
 
 ## ⚙️ 環境變數
 

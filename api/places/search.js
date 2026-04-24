@@ -1,18 +1,24 @@
 // Vercel Serverless Function: 附近餐廳搜尋
 // 使用 Google Places API (New) — places:searchNearby
 //
-// 單次 searchNearby 只能回 20 筆，所以這裡把類型切成多組平行查詢，
-// 合併去重後依距離排序，可以得到更廣的覆蓋（通常 40~80 間）。
-// API key 放在環境變數 GOOGLE_MAPS_API_KEY。
+// Google 單次 searchNearby 只能回 20 筆、且沒有分頁。為了在同一個半徑內
+// 拿到盡可能多的餐廳，這裡做兩層 fan-out：
+//
+//   1. 空間切片（spatial tiling）
+//      把原本以使用者為圓心的搜尋圓切成 5 格：中心 + 東 / 西 / 南 / 北。
+//      中心格用原半徑（抓最靠近使用者的 20 間），
+//      四個方位格偏移 R/2，各自半徑 0.75R（涵蓋對應象限的邊緣）。
+//
+//   2. 類型分組（type fan-out）
+//      每一格再按料理「語意分組」並行查詢，避免 20 筆名額被同一類吃滿。
+//
+// 總計 = 5 cells × 4 type groups = 最多 20 次並行 searchNearby。
+// Promise.allSettled 保底：任一呼叫失敗不影響其他結果。
+// 依 Pro SKU 計費，每次搜尋約 US$0.80；Vercel edge cache 120s 會擋重複請求。
 
-// 分組策略：每組涵蓋「語意相近」的類型，避免 20 筆名額被同一類吃滿。
-// 新增 / 調整此清單會直接影響 API 成本（每組 = 一次 searchNearby 呼叫）。
 const TYPE_GROUPS = [
-  // 通用餐廳（含美食街、外帶）— 抓一般最近的各式餐廳
   ["restaurant", "food_court", "meal_takeaway"],
-  // 咖啡 / 甜點 / 酒吧 — 一般餐廳查詢容易漏掉
   ["cafe", "coffee_shop", "bakery", "ice_cream_shop", "bar"],
-  // 亞洲料理專門店
   [
     "japanese_restaurant",
     "korean_restaurant",
@@ -23,7 +29,6 @@ const TYPE_GROUPS = [
     "ramen_restaurant",
     "indian_restaurant",
   ],
-  // 西式 / 其他專門店
   [
     "italian_restaurant",
     "american_restaurant",
@@ -58,6 +63,8 @@ const FIELD_MASK = [
   "places.nationalPhoneNumber",
 ].join(",");
 
+const SEARCH_NEARBY_MAX_RADIUS = 50000; // Google 硬上限
+
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = (d) => (d * Math.PI) / 180;
@@ -67,6 +74,27 @@ function haversine(lat1, lon1, lat2, lon2) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// 切成 5 個子圓：中心（全半徑）+ N/S/E/W（偏移 R/2，半徑 0.75R）。
+// 0.75R 是幾何上確保中心圓 + 4 個方位子圓能完整覆蓋原圓的最小半徑
+// （最糟位置是大圓邊緣上 45° 方向的點，離任一方位子圓中心 ≈ 0.737R）。
+function generateCells(lat, lon, radius) {
+  const metersPerLatDeg = 111320;
+  const metersPerLonDeg = 111320 * Math.cos((lat * Math.PI) / 180);
+  const offset = radius / 2;
+  const dLat = offset / metersPerLatDeg;
+  const dLon = offset / metersPerLonDeg;
+  const outerRadius = Math.min(radius * 0.75, SEARCH_NEARBY_MAX_RADIUS);
+  const centerRadius = Math.min(radius, SEARCH_NEARBY_MAX_RADIUS);
+
+  return [
+    { lat,               lon,               radius: centerRadius }, // 中心
+    { lat: lat + dLat,   lon,               radius: outerRadius  }, // 北
+    { lat: lat - dLat,   lon,               radius: outerRadius  }, // 南
+    { lat,               lon: lon + dLon,   radius: outerRadius  }, // 東
+    { lat,               lon: lon - dLon,   radius: outerRadius  }, // 西
+  ];
 }
 
 async function fetchGroup(key, types, lat, lon, radius) {
@@ -113,16 +141,26 @@ module.exports = async function handler(req, res) {
 
   const lat = parseFloat(req.query.lat);
   const lon = parseFloat(req.query.lon);
-  const radius = Math.min(Math.max(parseFloat(req.query.radius) || 1000, 1), 50000);
+  const radius = Math.min(
+    Math.max(parseFloat(req.query.radius) || 1000, 1),
+    SEARCH_NEARBY_MAX_RADIUS
+  );
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return res.status(400).json({ error: "Missing or invalid lat/lon" });
   }
 
-  // 平行打多組 searchNearby
-  const settled = await Promise.allSettled(
-    TYPE_GROUPS.map((types) => fetchGroup(key, types, lat, lon, radius))
-  );
+  const cells = generateCells(lat, lon, radius);
+
+  // cell × type_group 全部平行送出
+  const tasks = [];
+  for (const cell of cells) {
+    for (const types of TYPE_GROUPS) {
+      tasks.push(fetchGroup(key, types, cell.lat, cell.lon, cell.radius));
+    }
+  }
+
+  const settled = await Promise.allSettled(tasks);
 
   const errors = [];
   const seen = new Map();
@@ -143,34 +181,39 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const places = [...seen.values()].map((p) => {
-    const pLat = p.location?.latitude;
-    const pLng = p.location?.longitude;
-    return {
-      id: p.id,
-      name: p.displayName?.text || "",
-      address: p.shortFormattedAddress || p.formattedAddress || "",
-      location: pLat != null && pLng != null ? { lat: pLat, lng: pLng } : null,
-      rating: p.rating ?? null,
-      userRatingCount: p.userRatingCount ?? 0,
-      types: p.types || [],
-      primaryType: p.primaryType || "",
-      primaryTypeDisplay: p.primaryTypeDisplayName?.text || "",
-      priceLevel: p.priceLevel || null,
-      openNow: p.currentOpeningHours?.openNow ?? null,
-      weekdayDescriptions: p.regularOpeningHours?.weekdayDescriptions || [],
-      photos: (p.photos || []).slice(0, 3).map((ph) => ({
-        name: ph.name,
-        width: ph.widthPx,
-        height: ph.heightPx,
-        attribution: ph.authorAttributions?.[0]?.displayName || "",
-      })),
-      googleMapsUri: p.googleMapsUri || "",
-      websiteUri: p.websiteUri || "",
-      phone: p.nationalPhoneNumber || "",
-      distance: pLat != null && pLng != null ? haversine(lat, lon, pLat, pLng) : null,
-    };
-  });
+  // 依使用者實際位置（不是子圓中心）排序；超出原半徑的也濾掉
+  const places = [...seen.values()]
+    .map((p) => {
+      const pLat = p.location?.latitude;
+      const pLng = p.location?.longitude;
+      return {
+        id: p.id,
+        name: p.displayName?.text || "",
+        address: p.shortFormattedAddress || p.formattedAddress || "",
+        location: pLat != null && pLng != null ? { lat: pLat, lng: pLng } : null,
+        rating: p.rating ?? null,
+        userRatingCount: p.userRatingCount ?? 0,
+        types: p.types || [],
+        primaryType: p.primaryType || "",
+        primaryTypeDisplay: p.primaryTypeDisplayName?.text || "",
+        priceLevel: p.priceLevel || null,
+        openNow: p.currentOpeningHours?.openNow ?? null,
+        weekdayDescriptions: p.regularOpeningHours?.weekdayDescriptions || [],
+        photos: (p.photos || []).slice(0, 3).map((ph) => ({
+          name: ph.name,
+          width: ph.widthPx,
+          height: ph.heightPx,
+          attribution: ph.authorAttributions?.[0]?.displayName || "",
+        })),
+        googleMapsUri: p.googleMapsUri || "",
+        websiteUri: p.websiteUri || "",
+        phone: p.nationalPhoneNumber || "",
+        distance:
+          pLat != null && pLng != null ? haversine(lat, lon, pLat, pLng) : null,
+      };
+    })
+    // 方位子圓會涵蓋到大圓外 1.25R，把溢出的濾掉，避免結果比使用者指定的半徑遠
+    .filter((p) => p.distance == null || p.distance <= radius);
 
   places.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
 
@@ -180,7 +223,9 @@ module.exports = async function handler(req, res) {
   );
   return res.status(200).json({
     results: places,
+    cells: cells.length,
     groups: TYPE_GROUPS.length,
     partial: errors.length > 0,
+    errorCount: errors.length,
   });
 };
