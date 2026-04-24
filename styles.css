@@ -413,8 +413,8 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   position: absolute;
   top: 14px;
   left: 14px;
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--primary);
+  background: rgba(255, 255, 255, 0.96);
+  color: #b85a2e;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 12px;
@@ -422,7 +422,7 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   letter-spacing: 0.5px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 14px rgba(60, 48, 40, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 .pick-body {
@@ -531,36 +531,37 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   pointer-events: none;
 }
 
+/* 覆疊在照片上的 badge —— 顏色硬編碼，避免隨 system theme 變色失去對比 */
 .rating-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--text-strong);
+  background: rgba(255, 255, 255, 0.96);
+  color: #1a1816;
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 6px rgba(60, 48, 40, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .rating-badge .star {
-  color: var(--star);
+  color: #e8a53c;
   font-size: 12px;
 }
 
 .rating-badge .rating-count {
   font-weight: 500;
-  color: var(--muted);
+  color: #6b6560;
   font-size: 11px;
 }
 
 .rating-badge.no-rating {
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--muted);
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.92);
+  color: #6b6560;
+  font-weight: 600;
 }
 
 .status-badge {
@@ -570,31 +571,31 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   font-weight: 700;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 6px rgba(60, 48, 40, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .status-badge.open {
-  background: var(--success-bg);
-  color: var(--success-text);
+  background: rgba(47, 138, 85, 0.94);
+  color: #ffffff;
 }
 .status-badge.closed {
-  background: var(--danger-bg);
-  color: var(--danger-text);
+  background: rgba(180, 62, 62, 0.94);
+  color: #ffffff;
 }
 
 .distance-badge {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--text-strong);
+  background: rgba(255, 255, 255, 0.96);
+  color: #1a1816;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 6px rgba(60, 48, 40, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* Card body */
