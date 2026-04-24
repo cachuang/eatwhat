@@ -161,7 +161,7 @@ function handleLocate() {
         lat: pos.coords.latitude,
         lon: pos.coords.longitude,
       };
-      locateLabel.textContent = "重新定位";
+      locateLabel.textContent = "重新搜尋";
       fetchRestaurants();
     },
     (err) => {
