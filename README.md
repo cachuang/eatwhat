@@ -29,13 +29,48 @@ npx serve .
 
 > ⚠️ 現代瀏覽器要求在 HTTPS 或 `localhost` 下才會授予定位權限。直接用 `file://` 打開可能無法定位。
 
+## ☁️ 部署到 Vercel
+
+這是純靜態網站，Vercel 會自動偵測（無 build step、無 framework preset），部署後即自動取得 HTTPS（Geolocation API 必備條件）。
+
+### 方式 A：GitHub 連動（推薦）
+
+1. 前往 <https://vercel.com/new>
+2. 選擇 `cachuang/eatwhat` repository 匯入
+3. Framework Preset 保留 **Other**（靜態站）、其他欄位留空
+4. 按 **Deploy**，完成後會拿到 `https://<project>.vercel.app`
+
+之後每次 push 到 `main` 會自動更新正式環境，push 到其他分支會產生 Preview URL。
+
+### 方式 B：Vercel CLI
+
+```bash
+# 安裝 CLI（只需一次）
+npm i -g vercel
+
+# 在專案根目錄執行
+vercel            # 第一次會引導綁定 project，產出 preview 連結
+vercel --prod     # 部署到正式環境
+```
+
+### 設定檔說明
+
+`vercel.json` 已配置：
+- **安全 headers**：`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy: geolocation=(self)` 等
+- **快取策略**：`index.html` 每次重新驗證（確保更新即時生效），`css/js/圖片` 快取 1 小時
+- `cleanUrls` / `trailingSlash: false`
+
+如需自訂網域，至 Vercel Dashboard → Project → **Settings → Domains** 新增即可。
+
 ## 🗂️ 專案結構
 
 ```
 eatwhat/
-├─ index.html   # 頁面結構
-├─ styles.css   # 樣式（含深色模式）
-├─ app.js       # 定位、查詢、篩選、渲染
+├─ index.html     # 頁面結構
+├─ styles.css     # 樣式（含深色模式）
+├─ app.js         # 定位、查詢、篩選、渲染
+├─ vercel.json    # Vercel 部署設定（headers、cache）
+├─ .gitignore
 └─ README.md
 ```
 
