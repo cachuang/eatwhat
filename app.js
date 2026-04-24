@@ -225,122 +225,116 @@ function renderResults() {
 
 function renderItem(r) {
   const li = document.createElement("li");
-  li.className = "restaurant-item";
+  li.className = "card";
 
-  // 照片
-  const photoWrap = document.createElement("div");
-  photoWrap.className = "restaurant-photo";
+  // ===== 照片區（含 overlay badges）=====
+  const photo = document.createElement("div");
+  photo.className = "card-photo";
+
   if (r.photos && r.photos[0]) {
     const img = document.createElement("img");
     img.loading = "lazy";
     img.alt = r.name;
-    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=400`;
-    img.addEventListener("error", () => photoWrap.classList.add("photo-fallback"));
-    photoWrap.appendChild(img);
+    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=600`;
+    img.addEventListener("error", () => {
+      photo.classList.add("photo-fallback");
+      img.remove();
+      photo.insertAdjacentText("afterbegin", "🍽️");
+    });
+    photo.appendChild(img);
   } else {
-    photoWrap.classList.add("photo-fallback");
-    photoWrap.textContent = "🍽️";
+    photo.classList.add("photo-fallback");
+    photo.textContent = "🍽️";
   }
-  li.appendChild(photoWrap);
 
-  // 資訊
-  const info = document.createElement("div");
-  info.className = "restaurant-info";
+  const overlays = document.createElement("div");
+  overlays.className = "card-overlays";
 
-  const name = document.createElement("div");
-  name.className = "restaurant-name";
-  name.textContent = r.name;
-  info.appendChild(name);
-
-  // 評分列
-  const ratingRow = document.createElement("div");
-  ratingRow.className = "rating-row";
+  // 評分 badge（左上）
+  const ratingBadge = document.createElement("span");
   if (r.rating != null) {
-    const rating = document.createElement("span");
-    rating.className = "rating";
-    rating.innerHTML = `<span class="stars">${renderStars(r.rating)}</span> <strong>${r.rating.toFixed(1)}</strong>`;
-    ratingRow.appendChild(rating);
-
-    if (r.userRatingCount) {
-      const count = document.createElement("span");
-      count.className = "rating-count";
-      count.textContent = `(${formatCount(r.userRatingCount)})`;
-      ratingRow.appendChild(count);
-    }
+    ratingBadge.className = "rating-badge";
+    ratingBadge.innerHTML =
+      `<span class="star">★</span>` +
+      `<span>${r.rating.toFixed(1)}</span>` +
+      (r.userRatingCount
+        ? `<span class="rating-count">(${formatCount(r.userRatingCount)})</span>`
+        : "");
   } else {
-    const none = document.createElement("span");
-    none.className = "rating-none";
-    none.textContent = "尚無評分";
-    ratingRow.appendChild(none);
+    ratingBadge.className = "rating-badge no-rating";
+    ratingBadge.textContent = "尚無評分";
   }
+  overlays.appendChild(ratingBadge);
 
-  if (r.priceLevel) {
-    const price = document.createElement("span");
-    price.className = "price";
-    price.textContent = priceLevelDisplay(r.priceLevel);
-    ratingRow.appendChild(price);
-  }
-
+  // 營業中/休息中 badge（右上）
   if (r.openNow === true) {
-    const open = document.createElement("span");
-    open.className = "open-now open";
-    open.textContent = "營業中";
-    ratingRow.appendChild(open);
+    const s = document.createElement("span");
+    s.className = "status-badge open";
+    s.textContent = "營業中";
+    overlays.appendChild(s);
   } else if (r.openNow === false) {
-    const closed = document.createElement("span");
-    closed.className = "open-now closed";
-    closed.textContent = "休息中";
-    ratingRow.appendChild(closed);
+    const s = document.createElement("span");
+    s.className = "status-badge closed";
+    s.textContent = "休息中";
+    overlays.appendChild(s);
   }
-  info.appendChild(ratingRow);
+  photo.appendChild(overlays);
 
-  // Meta
+  // 距離 badge（右下）
+  if (r.distance != null) {
+    const d = document.createElement("span");
+    d.className = "distance-badge";
+    d.textContent = formatDistance(r.distance);
+    photo.appendChild(d);
+  }
+
+  li.appendChild(photo);
+
+  // ===== 內容區 =====
+  const body = document.createElement("div");
+  body.className = "card-body";
+
+  const name = document.createElement("h3");
+  name.className = "card-name";
+  name.textContent = r.name;
+  body.appendChild(name);
+
   const meta = document.createElement("div");
-  meta.className = "restaurant-meta";
+  meta.className = "card-meta";
   if (r.primaryTypeDisplay) {
     const t = document.createElement("span");
-    t.className = "tag";
+    t.className = "type-pill";
     t.textContent = r.primaryTypeDisplay;
     meta.appendChild(t);
   }
+  if (r.priceLevel) {
+    const p = document.createElement("span");
+    p.className = "price";
+    p.textContent = priceLevelDisplay(r.priceLevel);
+    meta.appendChild(p);
+  }
+  body.appendChild(meta);
+
   if (r.address) {
-    const a = document.createElement("span");
-    a.textContent = `📍 ${r.address}`;
-    meta.appendChild(a);
-  }
-  info.appendChild(meta);
-
-  li.appendChild(info);
-
-  // 右側 actions
-  const actions = document.createElement("div");
-  actions.className = "restaurant-actions";
-
-  if (r.distance != null) {
-    const dist = document.createElement("div");
-    dist.className = "distance";
-    dist.textContent = formatDistance(r.distance);
-    actions.appendChild(dist);
+    const addr = document.createElement("div");
+    addr.className = "card-address";
+    addr.textContent = `📍 ${r.address}`;
+    body.appendChild(addr);
   }
 
+  const footer = document.createElement("div");
+  footer.className = "card-footer";
   const mapLink = document.createElement("a");
   mapLink.className = "map-link";
   mapLink.href = r.googleMapsUri || mapsFallbackUrl(r);
   mapLink.target = "_blank";
   mapLink.rel = "noopener";
-  mapLink.textContent = "開啟地圖 ›";
-  actions.appendChild(mapLink);
+  mapLink.innerHTML = "Google 地圖 <span aria-hidden='true'>→</span>";
+  footer.appendChild(mapLink);
+  body.appendChild(footer);
 
-  li.appendChild(actions);
+  li.appendChild(body);
   return li;
-}
-
-function renderStars(rating) {
-  const full = Math.floor(rating);
-  const half = rating - full >= 0.25 && rating - full < 0.75;
-  const fullCount = half ? full : Math.round(rating);
-  const empty = 5 - fullCount - (half ? 1 : 0);
-  return "★".repeat(fullCount) + (half ? "☆" : "") + "☆".repeat(empty);
 }
 
 function priceLevelDisplay(level) {
@@ -395,22 +389,34 @@ function renderPickCard(r) {
   pickCardEl.innerHTML = "";
   pickCardEl.classList.remove("hidden");
 
+  const photoWrap = document.createElement("div");
+  photoWrap.className = "pick-photo-wrap";
+
   if (r.photos && r.photos[0]) {
     const img = document.createElement("img");
     img.className = "pick-photo";
     img.alt = r.name;
-    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=800`;
-    pickCardEl.appendChild(img);
+    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=1000`;
+    photoWrap.appendChild(img);
+  } else {
+    photoWrap.style.aspectRatio = "16 / 7";
+    photoWrap.style.display = "flex";
+    photoWrap.style.alignItems = "center";
+    photoWrap.style.justifyContent = "center";
+    photoWrap.style.fontSize = "72px";
+    photoWrap.textContent = "🍽️";
   }
+
+  const ribbon = document.createElement("span");
+  ribbon.className = "pick-ribbon";
+  ribbon.textContent = "🎲 今天就吃這間";
+  photoWrap.appendChild(ribbon);
+  pickCardEl.appendChild(photoWrap);
 
   const body = document.createElement("div");
   body.className = "pick-body";
 
-  const h = document.createElement("h3");
-  h.textContent = "🎲 今天就吃這間！";
-  body.appendChild(h);
-
-  const n = document.createElement("div");
+  const n = document.createElement("h2");
   n.className = "pick-name";
   n.textContent = r.name;
   body.appendChild(n);
@@ -418,11 +424,15 @@ function renderPickCard(r) {
   const metaLine = document.createElement("div");
   metaLine.className = "pick-meta";
   const parts = [];
-  if (r.rating != null) parts.push(`⭐ ${r.rating.toFixed(1)} (${formatCount(r.userRatingCount || 0)})`);
+  if (r.rating != null) {
+    parts.push(`<strong>⭐ ${r.rating.toFixed(1)}</strong>${r.userRatingCount ? ` (${formatCount(r.userRatingCount)})` : ""}`);
+  }
   if (r.primaryTypeDisplay) parts.push(r.primaryTypeDisplay);
   if (r.distance != null) parts.push(formatDistance(r.distance));
   if (r.priceLevel) parts.push(priceLevelDisplay(r.priceLevel));
-  metaLine.textContent = parts.join(" · ");
+  if (r.openNow === true) parts.push(`<strong style="color:var(--success)">營業中</strong>`);
+  else if (r.openNow === false) parts.push(`<strong style="color:var(--danger)">休息中</strong>`);
+  metaLine.innerHTML = parts.join(" · ");
   body.appendChild(metaLine);
 
   if (r.address) {
@@ -437,7 +447,7 @@ function renderPickCard(r) {
   a.href = r.googleMapsUri || mapsFallbackUrl(r);
   a.target = "_blank";
   a.rel = "noopener";
-  a.textContent = "用 Google 地圖開啟 ›";
+  a.innerHTML = "用 Google 地圖開啟 <span aria-hidden='true'>→</span>";
   body.appendChild(a);
 
   pickCardEl.appendChild(body);
