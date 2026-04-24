@@ -3,87 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0e6e47" />
-  <title>今天吃什麼</title>
-  <link rel="stylesheet" href="styles.css?v=13" />
+  <meta name="theme-color" content="#ff6b35" />
+  <title>今天吃什麼？</title>
+  <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-row">
-      <div class="logo">
-        <span class="logo-mark" aria-hidden="true">◐</span>
-        <span class="logo-text">今天吃什麼</span>
-      </div>
-      <p class="tagline">附近的餐廳一覽，挑一間就走</p>
-    </div>
+  <header class="app-header">
+    <h1>🍽️ 今天吃什麼？</h1>
+    <p class="subtitle">找找你附近有什麼好吃的</p>
   </header>
 
-  <main class="container">
-    <section class="panel">
-      <div class="panel-body search-row">
-        <button id="locate-btn" class="btn btn-solid">
-          <span id="locate-label">開始搜尋</span>
+  <main class="app-main">
+    <section class="controls">
+      <div class="location-row">
+        <button id="locate-btn" class="btn btn-primary">
+          <span class="btn-icon">📍</span>
+          <span id="locate-label">使用我的位置</span>
         </button>
-        <label class="field">
-          <span class="field-label">半徑</span>
+        <div class="radius-control">
+          <label for="radius">搜尋半徑</label>
           <select id="radius">
             <option value="500">500 m</option>
-            <option value="1000">1 km</option>
+            <option value="1000" selected>1 km</option>
             <option value="2000">2 km</option>
+            <option value="3000">3 km</option>
             <option value="5000">5 km</option>
-            <option value="10000" selected>10 km</option>
-            <option value="15000">15 km</option>
-            <option value="20000">20 km</option>
-            <option value="30000">30 km</option>
-            <option value="50000">50 km</option>
           </select>
-        </label>
+        </div>
       </div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </section>
 
-    <section class="panel panel-flush">
-      <header class="panel-header">
-        <h2 class="section-title">料理類型</h2>
-        <div class="link-actions">
-          <button id="filter-all" class="link" type="button">全選</button>
-          <span class="sep" aria-hidden="true">/</span>
-          <button id="filter-none" class="link" type="button">清除</button>
+    <section class="filters" aria-label="料理類型篩選">
+      <div class="filter-header">
+        <h2>料理類型</h2>
+        <div class="filter-actions">
+          <button id="filter-all" class="link-btn" type="button">全部</button>
+          <button id="filter-none" class="link-btn" type="button">清除</button>
         </div>
-      </header>
+      </div>
       <div id="filter-chips" class="chips"></div>
     </section>
 
-    <section class="toolbar">
-      <div class="toolbar-left">
-        <span id="result-count" class="result-count"></span>
-      </div>
-      <div class="toolbar-right">
-        <div class="seg" role="group" aria-label="排序方式">
-          <button type="button" class="seg-btn is-active" data-sort="distance">依距離</button>
-          <button type="button" class="seg-btn" data-sort="rating">依評分</button>
-        </div>
-        <button id="random-btn" class="btn btn-ghost" disabled>
-          <span aria-hidden="true">↺</span> 隨機抽
-        </button>
-      </div>
+    <section class="result-actions">
+      <button id="random-btn" class="btn btn-accent" disabled>
+        <span class="btn-icon">🎲</span>隨機抽一間
+      </button>
+      <div id="result-count" class="result-count"></div>
     </section>
 
-    <section id="pick-card" class="pick hidden" aria-live="polite"></section>
+    <section id="pick-card" class="pick-card hidden" aria-live="polite"></section>
 
-    <ul id="restaurant-list" class="grid"></ul>
-    <div id="empty-state" class="empty hidden">
-      <p>這個範圍內沒有符合條件的餐廳，試試放寬篩選或擴大搜尋半徑。</p>
-    </div>
+    <section class="results">
+      <ul id="restaurant-list" class="restaurant-list"></ul>
+      <div id="empty-state" class="empty-state hidden">
+        <p>🤔 這個範圍內沒有符合條件的餐廳，<br/>試試放寬篩選或擴大搜尋半徑。</p>
+      </div>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>資料與照片 <a href="https://developers.google.com/maps" target="_blank" rel="noopener">Google Maps Platform</a></p>
-    </div>
+  <footer class="app-footer">
+    <p>資料與照片 © <a href="https://developers.google.com/maps" target="_blank" rel="noopener">Google Maps Platform</a></p>
   </footer>
 
-  <script src="app.js?v=13"></script>
+  <script src="app.js"></script>
 </body>
 </html>

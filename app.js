@@ -2,77 +2,61 @@
 // 結合 Google Places types 與關鍵字（從 displayName/primaryTypeDisplay 比對）
 // types  — 比對 place.types / primaryType（Google 官方 type）
 // keywords — 比對 displayName + primaryTypeDisplay（小寫，涵蓋中/英）
-//
-// 排序邏輯：台式在地 → 華語圈 → 東亞 → 東南亞/南亞 → 西方異國 →
-//          料理風格 → 食材導向 → 餐飲形式（早餐/速食/咖啡/甜點）
 const CUISINE_FILTERS = [
-  // ── 本地 & 華語圈 ──
-  { id: "taiwanese",  label: "台式",   emoji: "🍱",
-    types: [],
-    keywords: ["台式", "台菜", "小吃", "滷味", "牛肉麵", "便當", "自助餐", "熱炒", "taiwanese"] },
-  { id: "chinese",    label: "中式",   emoji: "🥟",
-    types: ["chinese_restaurant"],
-    keywords: ["中式", "中餐", "港式", "粵", "川", "湘", "江浙", "北方", "chinese", "dim sum"] },
-
-  // ── 東亞 ──
   { id: "japanese",   label: "日式",   emoji: "🍣",
     types: ["japanese_restaurant", "sushi_restaurant", "ramen_restaurant"],
     keywords: ["日式", "日本料理", "壽司", "拉麵", "丼", "居酒屋", "japanese", "sushi", "ramen", "izakaya"] },
   { id: "korean",     label: "韓式",   emoji: "🍜",
     types: ["korean_restaurant"],
     keywords: ["韓式", "韓國", "korean"] },
-
-  // ── 東南亞 & 南亞 ──
-  { id: "thai",       label: "泰式",   emoji: "🌶️",
-    types: ["thai_restaurant"],
-    keywords: ["泰式", "泰國", "thai"] },
-  { id: "vietnamese", label: "越式",   emoji: "🍲",
-    types: ["vietnamese_restaurant"],
-    keywords: ["越式", "越南", "河粉", "vietnamese", "pho"] },
-  { id: "indian",     label: "印度",   emoji: "🍛",
-    types: ["indian_restaurant"],
-    keywords: ["印度", "indian"] },
-
-  // ── 西方異國料理 ──
-  { id: "italian",    label: "義式",   emoji: "🍝",
-    types: ["italian_restaurant", "pizza_restaurant"],
-    keywords: ["義式", "義大利", "披薩", "義大利麵", "italian", "pizza", "pasta"] },
-  { id: "american",   label: "美式",   emoji: "🍔",
-    types: ["american_restaurant", "hamburger_restaurant"],
-    keywords: ["美式", "漢堡", "american", "burger", "diner"] },
-  { id: "mexican",    label: "墨式",   emoji: "🌮",
-    types: ["mexican_restaurant"],
-    keywords: ["墨西哥", "mexican", "taco"] },
-
-  // ── 料理風格 ──
   { id: "bbq",        label: "燒肉",   emoji: "🥩",
     types: ["barbecue_restaurant", "steak_house"],
     keywords: ["燒肉", "燒烤", "yakiniku", "bbq", "barbecue", "grill", "steak", "牛排"] },
   { id: "hotpot",     label: "火鍋",   emoji: "🍲",
     types: [],
     keywords: ["火鍋", "麻辣鍋", "涮涮鍋", "壽喜燒", "hot pot", "hotpot", "shabu", "sukiyaki"] },
-
-  // ── 食材導向 ──
-  { id: "seafood",    label: "海鮮",   emoji: "🦐",
-    types: ["seafood_restaurant"],
-    keywords: ["海鮮", "seafood", "fish"] },
-  { id: "vegetarian", label: "蔬食",   emoji: "🥗",
-    types: ["vegetarian_restaurant", "vegan_restaurant"],
-    keywords: ["蔬食", "素食", "vegetarian", "vegan"] },
-
-  // ── 餐飲形式 ──
   { id: "breakfast",  label: "早餐",   emoji: "🥐",
     types: ["breakfast_restaurant", "brunch_restaurant"],
     keywords: ["早餐", "早午餐", "brunch", "breakfast"] },
-  { id: "fast_food",  label: "速食",   emoji: "🍟",
-    types: ["fast_food_restaurant"],
-    keywords: ["速食", "fast food"] },
+  { id: "chinese",    label: "中式",   emoji: "🥟",
+    types: ["chinese_restaurant"],
+    keywords: ["中式", "中餐", "港式", "粵", "川", "湘", "江浙", "北方", "chinese", "dim sum"] },
+  { id: "taiwanese",  label: "台式",   emoji: "🍱",
+    types: [],
+    keywords: ["台式", "台菜", "小吃", "滷味", "牛肉麵", "便當", "自助餐", "熱炒", "taiwanese"] },
+  { id: "american",   label: "美式",   emoji: "🍔",
+    types: ["american_restaurant", "hamburger_restaurant"],
+    keywords: ["美式", "漢堡", "american", "burger", "diner"] },
+  { id: "italian",    label: "義式",   emoji: "🍝",
+    types: ["italian_restaurant", "pizza_restaurant"],
+    keywords: ["義式", "義大利", "披薩", "義大利麵", "italian", "pizza", "pasta"] },
+  { id: "thai",       label: "泰式",   emoji: "🌶️",
+    types: ["thai_restaurant"],
+    keywords: ["泰式", "泰國", "thai"] },
+  { id: "vietnamese", label: "越式",   emoji: "🍲",
+    types: ["vietnamese_restaurant"],
+    keywords: ["越式", "越南", "河粉", "vietnamese", "pho"] },
   { id: "cafe",       label: "咖啡",   emoji: "☕",
     types: ["cafe", "coffee_shop"],
     keywords: ["咖啡", "cafe", "coffee"] },
   { id: "dessert",    label: "甜點",   emoji: "🍰",
     types: ["bakery", "ice_cream_shop"],
     keywords: ["甜點", "蛋糕", "麵包", "冰", "手搖", "飲", "bakery", "dessert", "ice cream"] },
+  { id: "fast_food",  label: "速食",   emoji: "🍟",
+    types: ["fast_food_restaurant"],
+    keywords: ["速食", "fast food"] },
+  { id: "indian",     label: "印度",   emoji: "🍛",
+    types: ["indian_restaurant"],
+    keywords: ["印度", "indian"] },
+  { id: "mexican",    label: "墨式",   emoji: "🌮",
+    types: ["mexican_restaurant"],
+    keywords: ["墨西哥", "mexican", "taco"] },
+  { id: "seafood",    label: "海鮮",   emoji: "🦐",
+    types: ["seafood_restaurant"],
+    keywords: ["海鮮", "seafood", "fish"] },
+  { id: "vegetarian", label: "蔬食",   emoji: "🥗",
+    types: ["vegetarian_restaurant", "vegan_restaurant"],
+    keywords: ["蔬食", "素食", "vegetarian", "vegan"] },
 ];
 
 // ===== 狀態 =====
@@ -80,7 +64,6 @@ const state = {
   userLocation: null,
   allRestaurants: [],
   activeFilters: new Set(),
-  sortBy: "distance", // "distance" | "rating"
   lastPickId: null,
 };
 
@@ -98,7 +81,6 @@ const resultCountEl = $("result-count");
 const pickCardEl = $("pick-card");
 const listEl = $("restaurant-list");
 const emptyStateEl = $("empty-state");
-const sortBtns = document.querySelectorAll(".seg-btn");
 
 // ===== 初始化 =====
 function init() {
@@ -118,16 +100,6 @@ function init() {
     renderResults();
   });
   randomBtn.addEventListener("click", handleRandomPick);
-
-  sortBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const sort = btn.dataset.sort;
-      if (!sort || sort === state.sortBy) return;
-      state.sortBy = sort;
-      sortBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.sort === sort));
-      renderResults();
-    });
-  });
 }
 
 function renderFilterChips() {
@@ -153,7 +125,7 @@ function renderFilterChips() {
 
 function refreshChips() {
   filterChipsEl.querySelectorAll(".chip").forEach((el) => {
-    el.classList.toggle("is-active", state.activeFilters.has(el.dataset.id));
+    el.classList.toggle("active", state.activeFilters.has(el.dataset.id));
   });
 }
 
@@ -173,7 +145,7 @@ function handleLocate() {
         lat: pos.coords.latitude,
         lon: pos.coords.longitude,
       };
-      locateLabel.textContent = "重新搜尋";
+      locateLabel.textContent = "重新定位";
       fetchRestaurants();
     },
     (err) => {
@@ -213,8 +185,7 @@ async function fetchRestaurants() {
 
   const results = (data.results || []).filter((r) => r.name);
   state.allRestaurants = results;
-  const partialNote = data.partial ? "（部分結果查詢失敗，顯示已取得的）" : "";
-  setStatus(`找到 ${results.length} 間餐廳（半徑 ${formatRadius(radius)}）${partialNote}`);
+  setStatus(`找到 ${results.length} 間餐廳（半徑 ${formatRadius(radius)}）`);
   renderResults();
 }
 
@@ -238,21 +209,8 @@ function getFiltered() {
   return state.allRestaurants.filter(matchesFilters);
 }
 
-function sortList(list) {
-  if (state.sortBy === "rating") {
-    // 評分高 → 低，同分比評論數；無評分的排最後
-    return [...list].sort((a, b) => {
-      const ra = a.rating ?? -1;
-      const rb = b.rating ?? -1;
-      if (rb !== ra) return rb - ra;
-      return (b.userRatingCount ?? 0) - (a.userRatingCount ?? 0);
-    });
-  }
-  return [...list].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
-}
-
 function renderResults() {
-  const list = sortList(getFiltered());
+  const list = getFiltered();
   resultCountEl.textContent = state.allRestaurants.length
     ? `顯示 ${list.length} / ${state.allRestaurants.length} 間`
     : "";
@@ -267,113 +225,122 @@ function renderResults() {
 
 function renderItem(r) {
   const li = document.createElement("li");
-  li.className = "card";
+  li.className = "restaurant-item";
 
-  // ===== 照片 =====
-  const photo = document.createElement("div");
-  photo.className = "card-photo";
-
+  // 照片
+  const photoWrap = document.createElement("div");
+  photoWrap.className = "restaurant-photo";
   if (r.photos && r.photos[0]) {
     const img = document.createElement("img");
     img.loading = "lazy";
     img.alt = r.name;
-    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=600`;
-    img.addEventListener("error", () => {
-      photo.classList.add("is-fallback");
-      img.remove();
-      photo.insertAdjacentText("afterbegin", "◐");
-    });
-    photo.appendChild(img);
+    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=400`;
+    img.addEventListener("error", () => photoWrap.classList.add("photo-fallback"));
+    photoWrap.appendChild(img);
   } else {
-    photo.classList.add("is-fallback");
-    photo.textContent = "◐";
+    photoWrap.classList.add("photo-fallback");
+    photoWrap.textContent = "🍽️";
   }
+  li.appendChild(photoWrap);
 
-  // 單一 overlay：右上角評分 pill
-  const rating = document.createElement("span");
-  if (r.rating != null) {
-    rating.className = "rating-pill";
-    rating.innerHTML =
-      `<span class="star">★</span>` +
-      `<span>${r.rating.toFixed(1)}</span>` +
-      (r.userRatingCount
-        ? `<span class="count">${formatCount(r.userRatingCount)}</span>`
-        : "");
-  } else {
-    rating.className = "rating-pill no-rating";
-    rating.textContent = "無評分";
-  }
-  photo.appendChild(rating);
+  // 資訊
+  const info = document.createElement("div");
+  info.className = "restaurant-info";
 
-  li.appendChild(photo);
-
-  // ===== 內容 =====
-  const body = document.createElement("div");
-  body.className = "card-body";
-
-  const name = document.createElement("h3");
-  name.className = "card-name";
+  const name = document.createElement("div");
+  name.className = "restaurant-name";
   name.textContent = r.name;
-  body.appendChild(name);
+  info.appendChild(name);
 
+  // 評分列
+  const ratingRow = document.createElement("div");
+  ratingRow.className = "rating-row";
+  if (r.rating != null) {
+    const rating = document.createElement("span");
+    rating.className = "rating";
+    rating.innerHTML = `<span class="stars">${renderStars(r.rating)}</span> <strong>${r.rating.toFixed(1)}</strong>`;
+    ratingRow.appendChild(rating);
+
+    if (r.userRatingCount) {
+      const count = document.createElement("span");
+      count.className = "rating-count";
+      count.textContent = `(${formatCount(r.userRatingCount)})`;
+      ratingRow.appendChild(count);
+    }
+  } else {
+    const none = document.createElement("span");
+    none.className = "rating-none";
+    none.textContent = "尚無評分";
+    ratingRow.appendChild(none);
+  }
+
+  if (r.priceLevel) {
+    const price = document.createElement("span");
+    price.className = "price";
+    price.textContent = priceLevelDisplay(r.priceLevel);
+    ratingRow.appendChild(price);
+  }
+
+  if (r.openNow === true) {
+    const open = document.createElement("span");
+    open.className = "open-now open";
+    open.textContent = "營業中";
+    ratingRow.appendChild(open);
+  } else if (r.openNow === false) {
+    const closed = document.createElement("span");
+    closed.className = "open-now closed";
+    closed.textContent = "休息中";
+    ratingRow.appendChild(closed);
+  }
+  info.appendChild(ratingRow);
+
+  // Meta
   const meta = document.createElement("div");
-  meta.className = "card-meta";
-
+  meta.className = "restaurant-meta";
   if (r.primaryTypeDisplay) {
     const t = document.createElement("span");
-    t.className = "type";
+    t.className = "tag";
     t.textContent = r.primaryTypeDisplay;
     meta.appendChild(t);
   }
-  if (r.priceLevel) {
-    if (meta.childElementCount) meta.appendChild(makeSep());
-    const p = document.createElement("span");
-    p.className = "price";
-    p.textContent = priceLevelDisplay(r.priceLevel);
-    meta.appendChild(p);
-  }
-  if (r.openNow === true || r.openNow === false) {
-    if (meta.childElementCount) meta.appendChild(makeSep());
-    const o = document.createElement("span");
-    o.className = `open-dot ${r.openNow ? "is-open" : "is-closed"}`;
-    o.textContent = r.openNow ? "營業中" : "休息中";
-    meta.appendChild(o);
-  }
-  if (meta.childElementCount) body.appendChild(meta);
-
   if (r.address) {
-    const addr = document.createElement("div");
-    addr.className = "card-address";
-    addr.textContent = r.address;
-    body.appendChild(addr);
+    const a = document.createElement("span");
+    a.textContent = `📍 ${r.address}`;
+    meta.appendChild(a);
   }
+  info.appendChild(meta);
 
-  const footer = document.createElement("div");
-  footer.className = "card-footer";
+  li.appendChild(info);
 
-  const dist = document.createElement("span");
-  dist.className = "card-distance";
-  dist.textContent = r.distance != null ? formatDistance(r.distance) : "";
-  footer.appendChild(dist);
+  // 右側 actions
+  const actions = document.createElement("div");
+  actions.className = "restaurant-actions";
+
+  if (r.distance != null) {
+    const dist = document.createElement("div");
+    dist.className = "distance";
+    dist.textContent = formatDistance(r.distance);
+    actions.appendChild(dist);
+  }
 
   const mapLink = document.createElement("a");
-  mapLink.className = "card-link";
+  mapLink.className = "map-link";
   mapLink.href = r.googleMapsUri || mapsFallbackUrl(r);
   mapLink.target = "_blank";
   mapLink.rel = "noopener";
-  mapLink.innerHTML = "Google 地圖 <span aria-hidden='true'>→</span>";
-  footer.appendChild(mapLink);
+  mapLink.textContent = "開啟地圖 ›";
+  actions.appendChild(mapLink);
 
-  body.appendChild(footer);
-  li.appendChild(body);
+  li.appendChild(actions);
   return li;
 }
 
-function makeSep() {
-  const s = document.createElement("span");
-  s.className = "sep";
-  s.textContent = "·";
-  return s;
+function renderStars(rating) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.25 && rating - full < 0.75;
+  const fullCount = half ? full : Math.round(rating);
+  const empty = 5 - fullCount - (half ? 1 : 0);
+  return "★".repeat(fullCount) + (half ? "☆" : "") + "☆".repeat(empty);
 }
 
 function priceLevelDisplay(level) {
@@ -428,35 +395,22 @@ function renderPickCard(r) {
   pickCardEl.innerHTML = "";
   pickCardEl.classList.remove("hidden");
 
-  // ── 左側照片 ──
-  const photoWrap = document.createElement("div");
-  photoWrap.className = "pick-photo";
-
   if (r.photos && r.photos[0]) {
     const img = document.createElement("img");
+    img.className = "pick-photo";
     img.alt = r.name;
-    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=900`;
-    photoWrap.appendChild(img);
-  } else {
-    photoWrap.style.display = "flex";
-    photoWrap.style.alignItems = "center";
-    photoWrap.style.justifyContent = "center";
-    photoWrap.style.fontSize = "64px";
-    photoWrap.style.color = "var(--muted-soft)";
-    photoWrap.textContent = "◐";
+    img.src = `/api/places/photo?name=${encodeURIComponent(r.photos[0].name)}&w=800`;
+    pickCardEl.appendChild(img);
   }
-  pickCardEl.appendChild(photoWrap);
 
-  // ── 右側內容 ──
   const body = document.createElement("div");
   body.className = "pick-body";
 
-  const eyebrow = document.createElement("div");
-  eyebrow.className = "pick-eyebrow";
-  eyebrow.textContent = "今日推薦";
-  body.appendChild(eyebrow);
+  const h = document.createElement("h3");
+  h.textContent = "🎲 今天就吃這間！";
+  body.appendChild(h);
 
-  const n = document.createElement("h2");
+  const n = document.createElement("div");
   n.className = "pick-name";
   n.textContent = r.name;
   body.appendChild(n);
@@ -464,30 +418,26 @@ function renderPickCard(r) {
   const metaLine = document.createElement("div");
   metaLine.className = "pick-meta";
   const parts = [];
-  if (r.rating != null) {
-    parts.push(`<strong>★ ${r.rating.toFixed(1)}</strong>${r.userRatingCount ? ` · ${formatCount(r.userRatingCount)} 則` : ""}`);
-  }
+  if (r.rating != null) parts.push(`⭐ ${r.rating.toFixed(1)} (${formatCount(r.userRatingCount || 0)})`);
   if (r.primaryTypeDisplay) parts.push(r.primaryTypeDisplay);
-  if (r.priceLevel) parts.push(priceLevelDisplay(r.priceLevel));
   if (r.distance != null) parts.push(formatDistance(r.distance));
-  if (r.openNow === true) parts.push(`<strong style="color:var(--success)">營業中</strong>`);
-  else if (r.openNow === false) parts.push(`<strong style="color:var(--danger)">休息中</strong>`);
-  metaLine.innerHTML = parts.join(" · ");
+  if (r.priceLevel) parts.push(priceLevelDisplay(r.priceLevel));
+  metaLine.textContent = parts.join(" · ");
   body.appendChild(metaLine);
 
   if (r.address) {
     const addr = document.createElement("div");
     addr.className = "pick-meta";
-    addr.textContent = r.address;
+    addr.textContent = `📍 ${r.address}`;
     body.appendChild(addr);
   }
 
   const a = document.createElement("a");
-  a.className = "pick-cta";
+  a.className = "pick-link";
   a.href = r.googleMapsUri || mapsFallbackUrl(r);
   a.target = "_blank";
   a.rel = "noopener";
-  a.innerHTML = "在 Google 地圖開啟 <span aria-hidden='true'>→</span>";
+  a.textContent = "用 Google 地圖開啟 ›";
   body.appendChild(a);
 
   pickCardEl.appendChild(body);
