@@ -11,6 +11,7 @@
   --chip-bg: #f2f2f2;
   --chip-active-bg: #ff6b35;
   --chip-active-fg: #ffffff;
+  --star: #f5b50a;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   --radius: 12px;
 }
@@ -97,36 +98,16 @@ a {
   font-family: inherit;
 }
 
-.btn:active {
-  transform: scale(0.97);
-}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
 
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-}
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:hover:not(:disabled) { background: var(--accent-dark); }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark);
-}
-
-.btn-accent {
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn-accent:hover:not(:disabled) {
-  background: var(--accent-dark);
-}
-
-.btn-icon {
-  font-size: 16px;
-}
+.btn-icon { font-size: 16px; }
 
 .radius-control {
   display: flex;
@@ -154,9 +135,7 @@ a {
   color: var(--muted);
 }
 
-.status.error {
-  color: #d04646;
-}
+.status.error { color: #d04646; }
 
 .filter-header {
   display: flex;
@@ -185,9 +164,7 @@ a {
   font-family: inherit;
 }
 
-.link-btn:hover {
-  text-decoration: underline;
-}
+.link-btn:hover { text-decoration: underline; }
 
 .chips {
   display: flex;
@@ -211,9 +188,7 @@ a {
   font-family: inherit;
 }
 
-.chip:hover {
-  border-color: var(--primary);
-}
+.chip:hover { border-color: var(--primary); }
 
 .chip.active {
   background: var(--chip-active-bg);
@@ -232,13 +207,27 @@ a {
   font-size: 14px;
 }
 
+/* ===== 今日推薦大卡片 ===== */
 .pick-card {
-  background: linear-gradient(135deg, var(--accent) 0%, #23a69a 100%);
-  color: #fff;
-  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 16px;
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.pick-photo {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.pick-body {
+  padding: 16px 20px 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, #23a69a 100%);
+  color: #fff;
 }
 
 .pick-card h3 {
@@ -249,55 +238,147 @@ a {
   letter-spacing: 0.5px;
 }
 
-.pick-card .pick-name {
+.pick-name {
   font-size: 22px;
   font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.pick-meta {
+  font-size: 14px;
+  opacity: 0.95;
   margin-bottom: 4px;
 }
 
-.pick-card .pick-meta {
-  font-size: 14px;
-  opacity: 0.95;
-  margin-bottom: 10px;
-}
-
-.pick-card .pick-link {
+.pick-link {
+  display: inline-block;
+  margin-top: 8px;
   color: #fff;
   text-decoration: underline;
   font-size: 14px;
 }
 
+/* ===== 餐廳列表 ===== */
 .restaurant-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .restaurant-item {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 16px;
   box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.restaurant-photo {
+  width: 120px;
+  height: 120px;
+  background: var(--chip-bg);
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.restaurant-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.restaurant-photo.photo-fallback {
+  color: var(--muted);
 }
 
 .restaurant-info {
   min-width: 0;
-  flex: 1;
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .restaurant-name {
   font-weight: 700;
   font-size: 16px;
-  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rating-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+}
+
+.rating .stars {
+  color: var(--star);
+  letter-spacing: 1px;
+  font-size: 14px;
+}
+
+.rating strong {
+  font-size: 14px;
+}
+
+.rating-count { color: var(--muted); }
+
+.rating-none {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.price { color: var(--muted); }
+
+.open-now {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.open-now.open {
+  background: #d9f5ec;
+  color: #0f7a5b;
+}
+
+.open-now.closed {
+  background: #fde2e2;
+  color: #b83535;
+}
+
+@media (prefers-color-scheme: dark) {
+  .open-now.open {
+    background: rgba(46, 196, 182, 0.18);
+    color: #5ad8c9;
+  }
+  .open-now.closed {
+    background: rgba(208, 70, 70, 0.18);
+    color: #ef8a8a;
+  }
 }
 
 .restaurant-meta {
@@ -323,6 +404,7 @@ a {
   align-items: flex-end;
   justify-content: center;
   gap: 6px;
+  padding: 12px 14px 12px 0;
   flex-shrink: 0;
 }
 
@@ -330,17 +412,17 @@ a {
   font-weight: 600;
   color: var(--primary);
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .map-link {
   font-size: 13px;
   color: var(--accent);
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.map-link:hover {
-  text-decoration: underline;
-}
+.map-link:hover { text-decoration: underline; }
 
 .empty-state {
   text-align: center;
@@ -348,9 +430,7 @@ a {
   padding: 40px 20px;
 }
 
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
 .app-footer {
   text-align: center;
@@ -379,10 +459,8 @@ a {
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 480px) {
-  .app-header h1 {
-    font-size: 24px;
-  }
+@media (max-width: 560px) {
+  .app-header h1 { font-size: 24px; }
 
   .radius-control {
     margin-left: 0;
@@ -391,12 +469,22 @@ a {
   }
 
   .restaurant-item {
-    flex-direction: column;
+    grid-template-columns: 96px 1fr;
+  }
+
+  .restaurant-photo {
+    width: 96px;
+    height: 100%;
+    min-height: 96px;
   }
 
   .restaurant-actions {
+    grid-column: 1 / -1;
     flex-direction: row;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    padding: 0 14px 12px;
   }
+
+  .pick-photo { height: 180px; }
 }
