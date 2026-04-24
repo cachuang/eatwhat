@@ -80,6 +80,7 @@ const state = {
   userLocation: null,
   allRestaurants: [],
   activeFilters: new Set(),
+  sortBy: "distance", // "distance" | "rating"
   lastPickId: null,
 };
 
@@ -97,6 +98,7 @@ const resultCountEl = $("result-count");
 const pickCardEl = $("pick-card");
 const listEl = $("restaurant-list");
 const emptyStateEl = $("empty-state");
+const sortBtns = document.querySelectorAll(".sort-btn");
 
 // ===== 初始化 =====
 function init() {
@@ -116,6 +118,16 @@ function init() {
     renderResults();
   });
   randomBtn.addEventListener("click", handleRandomPick);
+
+  sortBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sort = btn.dataset.sort;
+      if (!sort || sort === state.sortBy) return;
+      state.sortBy = sort;
+      sortBtns.forEach((b) => b.classList.toggle("active", b.dataset.sort === sort));
+      renderResults();
+    });
+  });
 }
 
 function renderFilterChips() {
@@ -226,8 +238,21 @@ function getFiltered() {
   return state.allRestaurants.filter(matchesFilters);
 }
 
+function sortList(list) {
+  if (state.sortBy === "rating") {
+    // 評分高 → 低，同分比評論數；無評分的排最後
+    return [...list].sort((a, b) => {
+      const ra = a.rating ?? -1;
+      const rb = b.rating ?? -1;
+      if (rb !== ra) return rb - ra;
+      return (b.userRatingCount ?? 0) - (a.userRatingCount ?? 0);
+    });
+  }
+  return [...list].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+}
+
 function renderResults() {
-  const list = getFiltered();
+  const list = sortList(getFiltered());
   resultCountEl.textContent = state.allRestaurants.length
     ? `顯示 ${list.length} / ${state.allRestaurants.length} 間`
     : "";

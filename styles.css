@@ -316,11 +316,55 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   flex-wrap: wrap;
 }
 
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .result-count {
   color: var(--muted);
   font-size: 14px;
   font-weight: 500;
 }
+
+.sort-group {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.sort-btn:hover:not(.active) {
+  color: var(--primary);
+}
+
+.sort-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(233, 64, 87, 0.3);
+}
+
+.sort-btn:active:not(.active) { transform: scale(0.96); }
 
 /* ========== Pick Card (隨機推薦) ========== */
 .pick-card {
@@ -663,6 +707,7 @@ h1, h2, h3 { color: var(--text-strong); letter-spacing: -0.01em; }
   .toolbar .btn-lg { width: 100%; justify-content: center; }
   .radius-control { margin-left: 0; justify-content: space-between; }
 
+  .result-meta { width: 100%; justify-content: space-between; }
   .result-bar .btn-accent { width: 100%; justify-content: center; }
 
   .card-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
