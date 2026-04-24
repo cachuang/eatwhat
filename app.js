@@ -185,7 +185,8 @@ async function fetchRestaurants() {
 
   const results = (data.results || []).filter((r) => r.name);
   state.allRestaurants = results;
-  setStatus(`找到 ${results.length} 間餐廳（半徑 ${formatRadius(radius)}）`);
+  const partialNote = data.partial ? "（部分結果查詢失敗，顯示已取得的）" : "";
+  setStatus(`找到 ${results.length} 間餐廳（半徑 ${formatRadius(radius)}）${partialNote}`);
   renderResults();
 }
 

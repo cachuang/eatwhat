@@ -16,13 +16,26 @@
 ## 🏗️ 架構
 
 ```
-Browser ──► /api/places/search ──► Google Places API (searchNearby)
+Browser ──► /api/places/search ──► Google Places API (searchNearby × N 組)
         ──► /api/places/photo  ──► Google Places API (photo media) ──► 302 redirect 到 Google CDN
 ```
 
 - 前端：純靜態 HTML/CSS/JS
 - 後端：Vercel Serverless Functions（Node 20，原生 `fetch`，無外部套件）
 - API key 僅存在於 Serverless 環境，**不會** 傳到瀏覽器
+
+### 🎯 覆蓋策略：為什麼平行打多組？
+
+Google Places API (New) 的 `searchNearby` 單次回傳上限是 **20 筆**，而且沒有分頁。單次查詢常會被同一類（例如全是連鎖咖啡）吃滿名額，錯過其他好店。
+
+`api/places/search.js` 把所有餐廳類型分成 4 組：
+
+1. **通用**（`restaurant`, `food_court`, `meal_takeaway`）
+2. **咖啡/甜點/酒吧**（`cafe`, `coffee_shop`, `bakery`, `ice_cream_shop`, `bar`）
+3. **亞洲料理**（日式、韓式、中式、泰式、越式、壽司、拉麵、印度…）
+4. **西式/其他**（義式、美式、披薩、漢堡、墨西哥、燒烤、牛排、海鮮、速食、早餐…）
+
+4 組 **同時** 送出，拿回後以 `place.id` 去重、依距離排序。通常可以拿到 40~80 間。若只想要更少呼叫，把 `TYPE_GROUPS` 改短即可。
 
 ## 🔑 Google Cloud 設定
 
@@ -37,7 +50,9 @@ Browser ──► /api/places/search ──► Google Places API (searchNearby)
    - **API restrictions**：選 **"Restrict key"** → 只勾 **Places API (New)**
 5. **啟用 billing**：Google Cloud 需要綁定付款方式，Places API (New) 有每月免費額度，超過才計費
 
-> 💸 **費用提醒**：Nearby Search 約 US$0.032/次（Essentials SKU，2025 定價），Place Photo 約 US$0.007/次，請依 Google Maps 最新費率確認。第一次用會有免費額度，日常小流量通常免費。
+> 💸 **費用提醒**：每次使用者按「使用我的位置」會**並行送出 4 次 `searchNearby`**（見下方「覆蓋策略」），因為單次查詢最多只回 20 筆，要多結果只能分組查再去重。以 Pro SKU 計費大約 **US$0.16 / 次搜尋**（4 × $0.040），Place Photo 約 US$0.007/次。Vercel 邊緣快取 120 秒，同一定位 2 分鐘內重查不計費。
+>
+> 若想再省錢，可以編輯 `api/places/search.js` 裡的 `TYPE_GROUPS` 減少組數（例如只留 2 組 = $0.08/次，結果約 30~40 間）。
 
 ## ⚙️ 環境變數
 
